@@ -54,7 +54,7 @@ def validate_model(model, valid_dl, loss_f):
     return val_loss / image_ct, top1_ct / image_ct, top5_ct / image_ct
 
 
-def get_model_imagnet_acc(model, imn_dir, max_batch=20, eval_per=5):
+def get_model_imagnet_acc(model, imn_dir, max_batch=5000, eval_per=1000):
     """
     Train the last layer of the model on ImageNet and return the best top-1 and top-5 accuracy
     achieved on the validation set.

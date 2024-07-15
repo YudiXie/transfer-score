@@ -48,13 +48,22 @@ def validate_model(model, valid_dl, loss_f):
 
             # Compute accuracy and accumulate
             top1_bct, top5_bct = topk_ct(outputs, targets, topk=(1, 5))
-            top1_ct += top1_bct
-            top5_ct += top5_bct
+            top1_ct += top1_bct.item()
+            top5_ct += top5_bct.item()
     
     return val_loss / image_ct, top1_ct / image_ct, top5_ct / image_ct
 
 
 def get_model_imagnet_acc(model, imn_dir, max_batch=20, eval_per=5):
+    """
+    Train the last layer of the model on ImageNet and return the best top-1 and top-5 accuracy
+    achieved on the validation set.
+    args:
+        model: a torchvision model, assume the last layer is called model.fc
+        imn_dir: the directory containing the ImageNet dataset
+        max_batch: the maximum number of batches to train
+        eval_per: the number of batches between each validation evaluation
+    """
     model = model.to(DEVICE)
 
     # only train the last layer

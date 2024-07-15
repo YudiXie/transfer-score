@@ -1,3 +1,4 @@
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -54,7 +55,7 @@ def validate_model(model, valid_dl, loss_f):
     return val_loss / image_ct, top1_ct / image_ct, top5_ct / image_ct
 
 
-def get_model_imagnet_acc(model, imn_dir, max_batch=5000, eval_per=1000):
+def get_model_imagnet_acc(model, imn_dir, max_batch=20000, eval_per=2000, save_path=''):
     """
     Train the last layer of the model on ImageNet and return the best top-1 and top-5 accuracy
     achieved on the validation set.
@@ -97,6 +98,12 @@ def get_model_imagnet_acc(model, imn_dir, max_batch=5000, eval_per=1000):
     best_object_acc1 = 0.0
     best_object_acc5 = 0.0
 
+    batch_n_list = []
+    train_loss_list = []
+    val_loss_list = []
+    val_acc1_list = []
+    val_acc5_list = []
+
     # Train the model
     model.train()
     while batch_n < max_batch:
@@ -127,8 +134,22 @@ def get_model_imagnet_acc(model, imn_dir, max_batch=5000, eval_per=1000):
                 out_string += f", Val Top1Acc: {val_acc1:.3f}"
                 out_string += f", Val Top5Acc: {val_acc5:.3f}"
                 print(out_string)
+                
+                batch_n_list.append(batch_n)
+                train_loss_list.append(train_loss.item())
+                val_loss_list.append(val_loss)
+                val_acc1_list.append(val_acc1)
+                val_acc5_list.append(val_acc5)
             
             if batch_n >= max_batch:
                 break
+    
+    if save_path:
+        save_dict = {'batch_n': batch_n_list,
+                     'train_loss': train_loss_list,
+                     'val_loss': val_loss_list,
+                     'val_acc1': val_acc1_list,
+                     'val_acc5': val_acc5_list}
+        pd.DataFrame.from_dict(save_dict).to_csv(save_path)
     
     return best_object_acc1, best_object_acc5

@@ -5,10 +5,37 @@ import torch.nn as nn
 import torch.optim as optim
 import torchvision.models as tvm
 from torchvision.datasets import ImageNet
+from torchvision.models import ResNet
 
 
 USE_CUDA = torch.cuda.is_available()
 DEVICE = torch.device('cuda:0' if USE_CUDA else 'cpu')
+
+
+def fix_resnet_layers(model, train_layer):
+    
+    assert isinstance(model, ResNet)
+
+    for param in model.parameters():
+        param.requires_grad_(False)
+    
+    assert train_layer in ['layer1', 'layer2', 'layer3', 'layer4', 'last']
+    if train_layer == 'layer1':
+        for param in model.layer1.parameters():
+            param.requires_grad_(True)
+    if train_layer in ['layer1', 'layer2']:
+        for param in model.layer2.parameters():
+            param.requires_grad_(True)
+    if train_layer in ['layer1', 'layer2', 'layer3']:
+        for param in model.layer3.parameters():
+            param.requires_grad_(True)
+    if train_layer in ['layer1', 'layer2', 'layer3', 'layer4']:
+        for param in model.layer4.parameters():
+            param.requires_grad_(True)
+    for param in model.fc.parameters():
+        param.requires_grad_(True)
+
+    return model
 
 
 def topk_ct(output, target, topk=(1,)):
@@ -67,12 +94,7 @@ def get_model_imagnet_acc(model, imn_dir, max_batch=20000, eval_per=2000, save_p
         eval_per: the number of batches between each validation evaluation
     """
     model = model.to(DEVICE)
-
-    # only train the last layer
-    for param in model.parameters():
-        param.requires_grad_(False)
-    for param in model.fc.parameters():
-        param.requires_grad_(True)
+    model = fix_resnet_layers(model, 'last')
 
     # Set up optimizer
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
